@@ -1,0 +1,22 @@
+- name: Create project
+  k8s:
+    state: present
+    inline:
+      kind: ProjectRequest
+      metadata:
+        name: kasten-io 
+      displayName: kasten-io 
+      description: This project was created using Ansible recovery
+
+- name: Add helm repo
+  kubernetes.core.helm_repository:
+    name: kasten 
+    repo_url: "{{ helm_chart_url }}"
+
+- name: Install Nginx Chart
+  kubernetes.core.helm:
+    name: k10 
+    namespace: kasten 
+    chart_ref: kasten/k10 
+
+
