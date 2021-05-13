@@ -13,7 +13,7 @@
     name: kasten 
     repo_url: "{{ helm_chart_url }}"
 
-- name: Install Nginx Chart
+- name: Install k10 Chart
   kubernetes.core.helm:
     name: k10 
     namespace: kasten 
