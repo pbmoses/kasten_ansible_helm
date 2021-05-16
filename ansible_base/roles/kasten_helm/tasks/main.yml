@@ -1,12 +1,8 @@
-- name: Create project
+- name: Create namespace 
   k8s:
     state: present
-    inline:
-      kind: ProjectRequest
-      metadata:
-        name: kasten-io 
-      displayName: kasten-io 
-      description: This project was created using Ansible recovery
+    kind: Namespace 
+    name: kasten-io 
 
 - name: Add helm repo
   kubernetes.core.helm_repository:
@@ -16,7 +12,7 @@
 - name: Install k10 Chart
   kubernetes.core.helm:
     name: k10 
-    namespace: kasten 
-    chart_ref: kasten/k10 
+    release_namespace: kasten-io
+    chart_ref: kasten/k10
 
 

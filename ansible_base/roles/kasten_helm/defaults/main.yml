@@ -1,1 +1,3 @@
 helm_chart_url: "https://charts.kasten.io/"
+APPS_BASE_DOMAIN: "apps.myopenshiftcluster.com"
+API_BASE_DOMAIN: "api.myopenshiftcluster.com"
