@@ -9,17 +9,45 @@
     name: kasten 
     repo_url: "{{ helm_chart_url }}"
 
+- name: Create Kasten Service Account
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: k10-dex-sa
+        namespace: kasten-io
+        annotations:
+        serviceaccounts.openshift.io/oauth-redirecturi.dex: https://k10-route-kasten-io.{{APPS_BASE_DOMAIN}}/k10/dex/callback
+
+##the following is NOT best practice but setup for P.O.C.
+- name: Get Dex Token
+  shell: oc -n kasten-io get secret $(oc -n kasten-io get sa k10-dex-sa -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 -d
+  register: dex_token
+
+- name: Print the token
+  debug:
+    msg: " {{ dex_token.stdout }}"
+
+
+
 - name: Install k10 Chart
   kubernetes.core.helm:
     name: k10 
     release_namespace: kasten-io
     chart_ref: kasten/k10
     values:
-      scc.creater: true
+      scc.create: true
       route.enabled: true
       route.tls.enabled: true
       auth.openshift.enabled: true
       auth.openshift.serviceAccount: k10-dex-sa
       auth.openshift.insecureCA: true
+      auth.openshift.clientSecret: "{{ dex_token.stdout }}"
+      auth.openshift.dashboardURL: 'https://k10-route-kasten-io.{{APPS_BASE_DOMAIN}}/k10/'
+      auth.openshift.openshiftURL: 'https://{{API_BASE_DOMAIN}}:6443'
+      injectKanisterSidecar.enabled: true
+      injectKanisterSidecar.namespaceSelector.matchLabels.k10/injectKanisterSidecar: true
 
 
