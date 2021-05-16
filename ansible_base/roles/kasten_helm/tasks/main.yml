@@ -1,3 +1,6 @@
+## This is not a best practice example
+## In particular, the DEX token is being used in the play
+## done for a quick and directy example
 - name: Create namespace 
   k8s:
     state: present
@@ -21,7 +24,6 @@
         annotations:
         serviceaccounts.openshift.io/oauth-redirecturi.dex: https://k10-route-kasten-io.{{APPS_BASE_DOMAIN}}/k10/dex/callback
 
-##the following is NOT best practice but setup for P.O.C.
 - name: Get Dex Token
   shell: oc -n kasten-io get secret $(oc -n kasten-io get sa k10-dex-sa -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 -d
   register: dex_token
