@@ -14,5 +14,12 @@
     name: k10 
     release_namespace: kasten-io
     chart_ref: kasten/k10
+    values:
+      scc.creater: true
+      route.enabled: true
+      route.tls.enabled: true
+      auth.openshift.enabled: true
+      auth.openshift.serviceAccount: k10-dex-sa
+      auth.openshift.insecureCA: true
 
 
