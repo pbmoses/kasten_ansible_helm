@@ -28,6 +28,12 @@
   shell: oc -n kasten-io get secret $(oc -n kasten-io get sa k10-dex-sa -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 -d
   register: dex_token
 
+- name: Annotate Ceph plugin
+  shell: oc annotate volumesnapshotclass ocs-storagecluster-cephfsplugin-snapclass k10.kasten.io/is-snapshot-class=true
+
+- name: Annotate volumesnapshotclass
+  shell: oc annotate volumesnapshotclass ocs-storagecluster-rbdplugin-snapclass k10.kasten.io/is-snapshot-class=true
+
 - name: Print the token
   debug:
     msg: " {{ dex_token.stdout }}"
