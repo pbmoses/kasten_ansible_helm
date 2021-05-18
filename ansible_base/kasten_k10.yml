@@ -1,0 +1,68 @@
+## This is not a best practice example
+## In particular, the DEX token is being used in the play
+## done for a quick and directy example
+- hosts: localhost
+  vars:
+    helm_chart_url: "https://charts.kasten.io/"
+    APPS_BASE_DOMAIN: "api.redacated"
+    API_BASE_DOMAIN: "apps.redacated"
+  tasks:
+ 
+  - name: Create namespace 
+    k8s:
+      state: present
+      kind: Namespace 
+      name: kasten-io 
+
+  - name: Add helm repo
+    kubernetes.core.helm_repository:
+      name: kasten 
+      repo_url: "{{ helm_chart_url }}"
+
+  - name: Create Kasten Service Account
+    k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: k10-dex-sa
+          namespace: kasten-io
+          annotations:
+          serviceaccounts.openshift.io/oauth-redirecturi.dex: https://k10-route-kasten-io.{{APPS_BASE_DOMAIN}}/k10/dex/callback
+
+  - name: Get Dex Token
+    shell: oc -n kasten-io get secret $(oc -n kasten-io get sa k10-dex-sa -o jsonpath='{.secrets[0].name}') -o jsonpath='{.data.token}' | base64 -d
+    register: dex_token
+
+  - name: Annotate Ceph plugin
+    shell: oc annotate volumesnapshotclass ocs-storagecluster-cephfsplugin-snapclass k10.kasten.io/is-snapshot-class=true
+
+  - name: Annotate volumesnapshotclass
+    shell: oc annotate volumesnapshotclass ocs-storagecluster-rbdplugin-snapclass k10.kasten.io/is-snapshot-class=true
+
+  - name: Print the token
+    debug:
+      msg: " {{ dex_token.stdout }}"
+
+
+
+  - name: Install k10 Chart
+    kubernetes.core.helm:
+      name: k10 
+      release_namespace: kasten-io
+      chart_ref: kasten/k10
+      values:
+        scc.create: true
+        route.enabled: true
+        route.tls.enabled: true
+        auth.openshift.enabled: true
+        auth.openshift.serviceAccount: k10-dex-sa
+        auth.openshift.insecureCA: true
+        auth.openshift.clientSecret: "{{ dex_token.stdout }}"
+        auth.openshift.dashboardURL: 'https://k10-route-kasten-io.{{APPS_BASE_DOMAIN}}/k10/'
+        auth.openshift.openshiftURL: 'https://{{API_BASE_DOMAIN}}:6443'
+        injectKanisterSidecar.enabled: true
+        injectKanisterSidecar.namespaceSelector.matchLabels.k10/injectKanisterSidecar: true
+
+
